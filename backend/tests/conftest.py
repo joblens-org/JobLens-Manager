@@ -9,6 +9,17 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.main import app
+from backend.common.auth import verify_token
+
+
+@pytest.fixture(autouse=True)
+def override_auth():
+    """自动跳过认证验证，使现有测试能正常运行"""
+    async def _bypass_auth():
+        return None
+    app.dependency_overrides[verify_token] = _bypass_auth
+    yield
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -56,6 +67,7 @@ def override_settings(monkeypatch):
     monkeypatch.setenv("REGISTRY_URL", "http://mock-registry:8080")
     monkeypatch.setenv("COLLECTOR_TIMEOUT", "1.0")
     monkeypatch.setenv("CACHE_TTL", "5")
+    monkeypatch.setenv("ADMIN_PASSWORD", "test123")
 
 
 @pytest.fixture

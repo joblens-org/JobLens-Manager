@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from backend.routers import services, jobs, metrics, configs, modes, roles, rules, clusters
+from backend.routers import services, jobs, metrics, configs, modes, roles, rules, clusters, auth
 from contextlib import asynccontextmanager
 from backend.common.logger import logger
 from backend.common import initialize_etcd
+from backend.common.auth import verify_token
 from backend.config import settings
 import time
 
@@ -52,14 +53,20 @@ async def log_requests(request: Request, call_next):
         )
         raise
 
-app.include_router(services.router, prefix="/api/services", tags=["services"])
-app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"])
-app.include_router(metrics.router, prefix="/api/metrics", tags=["metrics"])
-app.include_router(configs.router, prefix="/api/configs", tags=["configs"])
-app.include_router(modes.router, prefix="/api/modes", tags=["modes"])
-app.include_router(roles.router, prefix="/api/roles", tags=["roles"])
-app.include_router(rules.router, prefix="/api/rules", tags=["rules"])
-app.include_router(clusters.router, prefix="/api/clusters", tags=["clusters"])
+# 认证路由（无需 token 验证）
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+
+# 受保护的 API 父路由（所有业务接口需要 token 验证）
+api_router = APIRouter(prefix="/api", dependencies=[Depends(verify_token)])
+api_router.include_router(services.router, prefix="/services", tags=["services"])
+api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
+api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
+api_router.include_router(configs.router, prefix="/configs", tags=["configs"])
+api_router.include_router(modes.router, prefix="/modes", tags=["modes"])
+api_router.include_router(roles.router, prefix="/roles", tags=["roles"])
+api_router.include_router(rules.router, prefix="/rules", tags=["rules"])
+api_router.include_router(clusters.router, prefix="/clusters", tags=["clusters"])
+app.include_router(api_router)
 
 
 

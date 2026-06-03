@@ -4,13 +4,28 @@ import 'highlight.js/styles/atom-one-dark.css'
 import 'highlight.js/lib/languages/bash'
 import { RouterView } from 'vue-router'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Promotion, CopyDocument, MagicStick, Menu, ArrowDown } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Promotion, CopyDocument, MagicStick, Menu, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
 import { switchLang, i18n } from '@/locales'
+import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 
 const { t } = i18n.global
+const router = useRouter()
+const authStore = useAuthStore()
 const currentLang = computed(() => i18n.global.locale.value)
 const currentLangLabel = computed(() => currentLang.value === 'zh-CN' ? t('app.langZh') : t('app.langEn'))
+
+function handleLogout() {
+  ElMessageBox.confirm(t('auth.logoutConfirm'), t('common.warning'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning',
+  }).then(() => {
+    authStore.logout()
+    router.push('/login')
+  }).catch(() => {})
+}
 
 function handleLangChange(lang: string) {
   switchLang(lang as 'zh-CN' | 'en')
@@ -123,6 +138,12 @@ const copyCode = async (code: string) => {
             </el-dropdown-menu>
           </template>
         </el-dropdown>
+
+        <!-- 退出登录 -->
+        <el-button text class="lang-btn" @click="handleLogout">
+          <el-icon><SwitchButton /></el-icon>
+          {{ t('auth.logout') }}
+        </el-button>
         <!-- 安装指令弹出框 -->
         <el-popover
           :width="650"

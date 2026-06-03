@@ -10,6 +10,13 @@ class Settings(BaseSettings):
     优先级：环境变量 > .env文件 > 默认值
     """
     
+    # ==================== 认证配置 ====================
+    admin_password: str = Field(
+        default="admin",
+        env="ADMIN_PASSWORD",
+        description="管理员登录密码"
+    )
+
     # ==================== 通用配置 ====================
     registry_url: str = Field(
         default="http://localhost:8080",

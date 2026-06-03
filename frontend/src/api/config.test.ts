@@ -4,11 +4,18 @@ const mockGet = vi.hoisted(() => vi.fn())
 const mockPut = vi.hoisted(() => vi.fn())
 const mockPost = vi.hoisted(() => vi.fn())
 
+const mockInterceptorRequestUse = vi.hoisted(() => vi.fn())
+const mockInterceptorResponseUse = vi.hoisted(() => vi.fn())
+
 const mockAxiosInstance = vi.hoisted(() => ({
   get: mockGet,
   put: mockPut,
   post: mockPost,
   delete: vi.fn(),
+  interceptors: {
+    request: { use: mockInterceptorRequestUse },
+    response: { use: mockInterceptorResponseUse },
+  },
 }))
 
 vi.mock('axios', () => {

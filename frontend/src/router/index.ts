@@ -6,10 +6,16 @@ import JobManager from '../views/JobManager.vue'
 import ConfigManager from '../views/ConfigManager.vue'
 import RoleManager from '../views/RoleManager.vue'
 import ClusterManager from '../views/ClusterManager.vue'
+import LoginView from '../views/LoginView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
+    },
     {
       path: '/',
       name: 'dashboard',
@@ -47,6 +53,17 @@ const router = createRouter({
       component: ClusterManager,
     },
   ],
+})
+
+router.beforeEach((to, _from, next) => {
+  const token = localStorage.getItem('joblens_token')
+  if (to.name !== 'login' && !token) {
+    next({ name: 'login', query: { redirect: to.fullPath } })
+  } else if (to.name === 'login' && token) {
+    next({ name: 'dashboard' })
+  } else {
+    next()
+  }
 })
 
 export default router

@@ -403,4 +403,12 @@ export default {
   timezone: {
     placeholder: 'Select timezone',
   },
+  auth: {
+    login: 'Login',
+    logout: 'Logout',
+    password: 'Admin Password',
+    enterPassword: 'Enter admin password',
+    loginFailed: 'Login failed',
+    logoutConfirm: 'Are you sure you want to logout?',
+  },
 }

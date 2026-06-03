@@ -403,4 +403,12 @@ export default {
   timezone: {
     placeholder: '选择时区',
   },
+  auth: {
+    login: '登录',
+    logout: '退出登录',
+    password: '管理员密码',
+    enterPassword: '请输入管理员密码',
+    loginFailed: '登录失败',
+    logoutConfirm: '确定要退出登录吗？',
+  },
 }

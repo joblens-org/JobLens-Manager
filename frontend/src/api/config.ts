@@ -23,6 +23,27 @@ const apiClient = axios.create({
   timeout: parseInt(runtimeConfig.API_TIMEOUT || '30000'),
 })
 
+// 请求拦截器：自动附加认证 token
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('joblens_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// 响应拦截器：处理 401 未认证
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem('joblens_token')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  },
+)
+
 // 配置响应接口
 export interface ConfigResponse {
   mode: string

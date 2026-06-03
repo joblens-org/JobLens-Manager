@@ -9,4 +9,5 @@ pytest-asyncio
 concurrent-log-handler
 protobuf<3.20
 etcd3
+pyjwt
 lupa>=2.0
