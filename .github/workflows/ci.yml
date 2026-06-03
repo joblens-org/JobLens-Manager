@@ -1,0 +1,91 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ===== 后端测试 =====
+  test-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 安装依赖
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+
+      - name: Lint 检查
+        run: |
+          flake8 backend/ || true
+          black --check backend/ || true
+          isort --check backend/ || true
+
+      - name: 单元测试
+        run: pytest -m "not docker and not slow" --cov=backend
+
+  # ===== 前端测试 =====
+  test-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查
+        run: npm run type-check
+
+      - name: 代码检查
+        run: npm run lint
+
+      - name: 单元测试
+        run: npm run test
+
+  # ===== 构建推送 + 触发 GitLab（仅 main 分支 push） =====
+  build-push:
+    needs: [test-backend, test-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 登录 DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 构建并推送镜像
+        run: |
+          chmod +x scripts/*.sh
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          ./scripts/docker-build.sh "${SHORT_SHA}"
+          ./scripts/docker-build.sh latest
+          ./scripts/docker-push.sh "${SHORT_SHA}"
+          ./scripts/docker-push.sh latest
+
+      - name: 触发 GitLab CI
+        run: |
+          export GITLAB_TOKEN="${{ secrets.GITLAB_TRIGGER_TOKEN }}"
+          export GITLAB_PROJECT_ID="${{ secrets.GITLAB_PROJECT_ID }}"
+          ./scripts/trigger-gitlab.sh main
