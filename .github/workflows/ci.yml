@@ -7,9 +7,15 @@ on:
     branches: [main]
 
 env:
-  DOCKERHUB_NAMESPACE: joblens
-  BACKEND_IMAGE: joblens-webmanager-backend
-  FRONTEND_IMAGE: joblens-webmanager-frontend
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ${{ github.repository }}/backend
+  FRONTEND_IMAGE: ${{ github.repository }}/frontend
+
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
 
 jobs:
   # ===== 后端测试 =====
@@ -74,40 +80,68 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 登录 DockerHub
-        uses: docker/login-action@v3
+      - name: 登录 GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 验证登录状态
-        run: |
-          docker info --format '已登录用户: {{ .RegistryConfig.IndexConfigs }}' 2>&1 || true
-          echo "目标仓库: $DOCKERHUB_NAMESPACE/$BACKEND_IMAGE"
-          echo "目标仓库: $DOCKERHUB_NAMESPACE/$FRONTEND_IMAGE"
-
-      - name: 获取短 SHA
-        id: sha
-        run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      # ---- 后端镜像 ----
+      - name: 提取后端镜像元数据
+        id: meta-backend
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: 构建并推送后端镜像
-        uses: docker/build-push-action@v6
+        id: push-backend
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4
         with:
           context: ./backend
           push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+
+      - name: 生成后端镜像 attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
+          subject-digest: ${{ steps.push-backend.outputs.digest }}
+          push-to-registry: true
+
+      # ---- 前端镜像 ----
+      - name: 提取前端镜像元数据
+        id: meta-frontend
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}
           tags: |
-            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.BACKEND_IMAGE }}:latest
-            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.BACKEND_IMAGE }}:${{ steps.sha.outputs.short }}
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: 构建并推送前端镜像
-        uses: docker/build-push-action@v6
+        id: push-frontend
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4
         with:
           context: ./frontend
           push: true
-          tags: |
-            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.FRONTEND_IMAGE }}:latest
-            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.FRONTEND_IMAGE }}:${{ steps.sha.outputs.short }}
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
 
+      - name: 生成前端镜像 attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}
+          subject-digest: ${{ steps.push-frontend.outputs.digest }}
+          push-to-registry: true
+
+      # ---- 触发 GitLab CI ----
       - name: 触发 GitLab CI
         run: |
           export GITLAB_TOKEN="${{ secrets.GITLAB_TRIGGER_TOKEN }}"
