@@ -144,6 +144,7 @@ jobs:
       # ---- 触发 GitLab CI ----
       - name: 触发 GitLab CI
         run: |
+          export GITLAB_URL="${{ secrets.GITLAB_URL }}"
           export GITLAB_TOKEN="${{ secrets.GITLAB_TRIGGER_TOKEN }}"
           export GITLAB_PROJECT_ID="${{ secrets.GITLAB_PROJECT_ID }}"
           chmod +x scripts/trigger-gitlab.sh
