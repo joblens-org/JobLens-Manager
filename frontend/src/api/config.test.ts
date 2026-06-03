@@ -19,10 +19,10 @@ const mockAxiosInstance = vi.hoisted(() => ({
 }))
 
 vi.mock('axios', () => {
-  const mockAxios: any = vi.fn()
+  const mockAxios = vi.fn() as unknown as Record<string, unknown>
   mockAxios.create = vi.fn(() => mockAxiosInstance)
   mockAxios.isAxiosError = vi.fn(() => false)
-  return { default: mockAxios }
+  return { default: mockAxios as unknown as typeof import('axios').default }
 })
 
 import { configApi } from './config'
@@ -81,7 +81,7 @@ describe('configApi', () => {
 
   it('getAllModes calls GET /configs/modes', async () => {
     mockGet.mockResolvedValue({ data: { modes: [], timestamp: '' } })
-    const result = await configApi.getAllModes()
+    await configApi.getAllModes()
     expect(mockGet).toHaveBeenCalledWith('/configs/modes')
   })
 

@@ -27,8 +27,9 @@ export const useAuthStore = defineStore('auth', () => {
       const t = await loginApi(password)
       setToken(t)
       return true
-    } catch (e: any) {
-      const msg = e?.response?.data?.detail || e?.message || '登录失败'
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } }; message?: string }
+      const msg = err?.response?.data?.detail || err?.message || '登录失败'
       error.value = msg
       return false
     } finally {

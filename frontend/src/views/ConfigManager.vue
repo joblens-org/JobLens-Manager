@@ -314,11 +314,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { i18n } from '@/locales'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Edit, Check, Close, Refresh, Plus, More, InfoFilled, User } from '@element-plus/icons-vue'
+import { Edit, Check, Close, Refresh, Plus, More, InfoFilled } from '@element-plus/icons-vue'
 import { modesApi } from '@/api'
 import { CodeEditor } from 'monaco-editor-vue3'
 import type {
@@ -328,6 +328,8 @@ import type {
   ModeConfigUpdate,
   ModeVersionInfo,
 } from '@/api/modes'
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const { t } = useI18n()
 
@@ -433,8 +435,6 @@ const validateYaml = (content: string): boolean => {
     }
 
     const lines = content.split('\n')
-    const indentLevel = 0
-    const lastIndent = 0
 
     // 基本语法检查
     for (let i = 0; i < lines.length; i++) {

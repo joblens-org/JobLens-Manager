@@ -84,7 +84,7 @@ describe('modesApi', () => {
 
   it('getSpecificVersion calls GET /modes/{name}/version/{v}', async () => {
     mockGet.mockResolvedValue({ data: { mode: 'prod', version: 'v1', config: 'yaml' } })
-    const result = await modesApi.getSpecificVersion('prod', 'v1')
+    await modesApi.getSpecificVersion('prod', 'v1')
     expect(mockGet).toHaveBeenCalledWith('/modes/prod/version/v1')
   })
 

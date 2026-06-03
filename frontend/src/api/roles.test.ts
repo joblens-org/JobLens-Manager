@@ -63,7 +63,7 @@ describe('rolesApi', () => {
 
   it('getRoleEffectiveRules calls GET /roles/{id}/rules/effective', async () => {
     mockGet.mockResolvedValue({ data: { rules: [], total: 0 } })
-    const result = await rolesApi.getRoleEffectiveRules('r1')
+    await rolesApi.getRoleEffectiveRules('r1')
     expect(mockGet).toHaveBeenCalledWith('/roles/r1/rules/effective')
   })
 

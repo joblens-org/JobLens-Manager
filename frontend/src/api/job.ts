@@ -38,7 +38,7 @@ export const jobApi = {
   },
 
   async getJobsByServiceIds(serviceIds: string[]): Promise<JobListResponse[]> {
-    const params: any = {}
+    const params: Record<string, string> = {}
     if (serviceIds && serviceIds.length > 0) {
       params.service_ids = serviceIds.join(',')
     }

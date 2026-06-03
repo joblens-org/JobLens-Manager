@@ -281,6 +281,14 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { jobApi, serviceApi } from '@/api'
 import type { JobListResponse, JobCreateRequest, ServiceInfo } from '@/api'
+import type { JobInfo } from '@/api/job'
+
+interface JobEntry extends JobInfo {
+  service_name: string
+  service_id: string
+  job_id?: string
+  job_type?: string
+}
 
 const { t } = useI18n()
 
@@ -318,7 +326,7 @@ const rules = computed(() => ({
 }))
 
 const allJobs = computed(() => {
-  const jobs: any[] = []
+  const jobs: JobEntry[] = []
   jobResponses.value.forEach((response) => {
     response.jobs.forEach((job) => {
       jobs.push({
@@ -386,7 +394,7 @@ const allLenses = computed(() => {
 
 const filteredJobs = computed(() => {
   const kw = (filters.value.keyword || '').toString().trim().toLowerCase()
-  return allJobs.value.filter((job: any) => {
+  return allJobs.value.filter((job: JobEntry) => {
     if (filters.value.service_id && String(job.service_id) !== String(filters.value.service_id)) {
       return false
     }
@@ -409,8 +417,8 @@ const filteredJobs = computed(() => {
         String(job.service_id || '')
           .toLowerCase()
           .includes(kw) ||
-        (job.JobPIDs || []).some((p: any) => String(p).toLowerCase().includes(kw)) ||
-        (job.CollectorNames || []).some((l: any) => String(l).toLowerCase().includes(kw))
+        (job.JobPIDs || []).some((p) => String(p).toLowerCase().includes(kw)) ||
+        (job.CollectorNames || []).some((l) => String(l).toLowerCase().includes(kw))
       if (!found) return false
     }
     return true
@@ -497,15 +505,15 @@ const loadServices = async () => {
   }
 }
 
-const deleteJob = async (job: any) => {
+const deleteJob = async (job: JobEntry) => {
   try {
-    await ElMessageBox.confirm(t('job.confirmDelete', { jobId: job.job_id }), t('common.warning'), {
+    await ElMessageBox.confirm(t('job.confirmDelete', { jobId: job.JobID }), t('common.warning'), {
       confirmButtonText: t('common.confirm'),
       cancelButtonText: t('common.cancel'),
       type: 'warning',
     })
 
-    await jobApi.deleteJob(job.job_id, job.service_id, job.job_type)
+    await jobApi.deleteJob(job.JobID, job.service_id, job.jobtype)
     ElMessage.success(t('job.deleteSuccess'))
     loadJobsForSelectedServices()
   } catch (error) {

@@ -124,8 +124,10 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as echarts from 'echarts'
-import { serviceApi, metricsApi } from '@/api'
+import { serviceApi } from '@/api'
 import type { ServiceInfo, RegistryStats } from '@/api'
+
+defineOptions({ name: 'DashboardView' })
 
 const { t } = useI18n()
 

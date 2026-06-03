@@ -1,11 +1,18 @@
 import axios from 'axios'
 
 // 从运行时配置读取环境变量，如果没有则使用默认值
-const getRuntimeConfig = () => {
+interface RuntimeConfig {
+  API_BASE_URL: string
+  REFRESH_INTERVAL: string
+  API_TIMEOUT: string
+  SERVICE_DETAIL_REFRESH_INTERVAL: string
+}
+
+const getRuntimeConfig = (): RuntimeConfig => {
   // 尝试从 window.__RUNTIME_CONFIG__ 读取
-  if (typeof window !== 'undefined' && (window as any).__RUNTIME_CONFIG__) {
-    return (window as any).__RUNTIME_CONFIG__
-  }
+  const w = typeof window !== 'undefined' ? window as unknown as Record<string, unknown> : null
+  const c = w?.__RUNTIME_CONFIG__ as RuntimeConfig | undefined
+  if (c) return c
   // 否则使用 Vite 环境变量（开发环境）
   return {
     API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
