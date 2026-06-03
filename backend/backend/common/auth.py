@@ -1,6 +1,7 @@
 """
-认证模块：JWT 令牌创建和验证。
+认证模块：JWT 令牌创建和验证，支持 IP 白名单免认证。
 """
+import ipaddress
 import jwt
 from fastapi import Header, HTTPException, Request
 from backend.config import settings
@@ -21,8 +22,35 @@ def create_token() -> str:
     return jwt.encode(payload, settings.admin_password, algorithm=_ALGORITHM)
 
 
-async def verify_token(authorization: str = Header(None)):
-    """FastAPI 依赖：从 Authorization Header 中验证 JWT 令牌"""
+def _ip_in_whitelist(ip_str: str, whitelist: str) -> bool:
+    """检查客户端 IP 是否匹配白名单（支持逗号分隔的 IP 或 CIDR 网段）"""
+    try:
+        client_ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False
+    for entry in whitelist.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        try:
+            if "/" in entry:
+                if client_ip in ipaddress.ip_network(entry, strict=False):
+                    return True
+            elif client_ip == ipaddress.ip_address(entry):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+async def verify_token(request: Request, authorization: str = Header(None)):
+    """FastAPI 依赖：先检查白名单，再验证 JWT 令牌"""
+    # 白名单 IP 免认证
+    if settings.auth_whitelist_ips and request.client:
+        client_ip = request.client.host
+        if _ip_in_whitelist(client_ip, settings.auth_whitelist_ips):
+            return
+    # JWT 令牌验证
     if not authorization:
         raise HTTPException(status_code=401, detail="未提供认证凭据")
     scheme, _, token = authorization.partition(" ")

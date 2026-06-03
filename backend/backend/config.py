@@ -16,6 +16,11 @@ class Settings(BaseSettings):
         env="ADMIN_PASSWORD",
         description="管理员登录密码"
     )
+    auth_whitelist_ips: str = Field(
+        default="",
+        env="AUTH_WHITELIST_IPS",
+        description="白名单 IP，逗号分隔，支持 CIDR（如 127.0.0.1,10.0.0.0/8），白名单 IP 调用接口免认证"
+    )
 
     # ==================== 通用配置 ====================
     registry_url: str = Field(

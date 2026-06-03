@@ -15,7 +15,7 @@ from backend.common.auth import verify_token
 @pytest.fixture(autouse=True)
 def override_auth():
     """自动跳过认证验证，使现有测试能正常运行"""
-    async def _bypass_auth():
+    async def _bypass_auth(**kwargs):
         return None
     app.dependency_overrides[verify_token] = _bypass_auth
     yield
