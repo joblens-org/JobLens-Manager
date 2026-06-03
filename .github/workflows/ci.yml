@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  DOCKERHUB_NAMESPACE: joblens
+  BACKEND_IMAGE: joblens-webmanager-backend
+  FRONTEND_IMAGE: joblens-webmanager-frontend
+
 jobs:
   # ===== 后端测试 =====
   test-backend:
@@ -75,17 +80,37 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 构建并推送镜像
+      - name: 验证登录状态
         run: |
-          chmod +x scripts/*.sh
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          ./scripts/docker-build.sh "${SHORT_SHA}"
-          ./scripts/docker-build.sh latest
-          ./scripts/docker-push.sh "${SHORT_SHA}"
-          ./scripts/docker-push.sh latest
+          docker info --format '已登录用户: {{ .RegistryConfig.IndexConfigs }}' 2>&1 || true
+          echo "目标仓库: $DOCKERHUB_NAMESPACE/$BACKEND_IMAGE"
+          echo "目标仓库: $DOCKERHUB_NAMESPACE/$FRONTEND_IMAGE"
+
+      - name: 获取短 SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: 构建并推送后端镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.BACKEND_IMAGE }}:${{ steps.sha.outputs.short }}
+
+      - name: 构建并推送前端镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.DOCKERHUB_NAMESPACE }}/${{ env.FRONTEND_IMAGE }}:${{ steps.sha.outputs.short }}
 
       - name: 触发 GitLab CI
         run: |
           export GITLAB_TOKEN="${{ secrets.GITLAB_TRIGGER_TOKEN }}"
           export GITLAB_PROJECT_ID="${{ secrets.GITLAB_PROJECT_ID }}"
+          chmod +x scripts/trigger-gitlab.sh
           ./scripts/trigger-gitlab.sh main
