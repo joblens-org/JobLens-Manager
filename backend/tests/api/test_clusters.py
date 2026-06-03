@@ -1,6 +1,7 @@
 """clusters路由的API端点测试"""
 import json
 import pytest
+pytestmark = pytest.mark.docker
 from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 from backend.main import app

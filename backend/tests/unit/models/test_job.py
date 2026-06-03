@@ -89,11 +89,12 @@ class TestCondorJobOperation:
         operation = CondorJobOperation(
             JobID=789,
             JobPIDs=[3001],
-            Lens=["lens1"]
+            Lens=["lens1"],
+            slot="default-slot"
         )
         assert operation.opt == "add"
         assert operation.type == "job.condor"
-        assert operation.slot is None
+        assert operation.slot == "default-slot"
 
 
 class TestJobCreateRequest:

@@ -9,6 +9,11 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.main import app
+import backend.main as _main_module
+
+# mock 掉 ETCD 初始化，避免 TestClient 启动时连接真实 ETCD
+_main_module.initialize_etcd = lambda: None
+
 from backend.common.auth import verify_token
 
 

@@ -1,5 +1,6 @@
 """metrics路由的API端点测试"""
 import pytest
+pytestmark = pytest.mark.docker
 from unittest.mock import Mock, AsyncMock, patch
 from fastapi.testclient import TestClient
 from datetime import datetime

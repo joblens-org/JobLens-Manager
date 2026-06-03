@@ -1,5 +1,6 @@
 """configs路由的API端点测试"""
 import pytest
+pytestmark = pytest.mark.docker
 import json
 from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
