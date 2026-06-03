@@ -75,7 +75,7 @@ describe('configApi', () => {
   it('rollbackToVersion calls POST /configs/{mode}/rollback/{v}', async () => {
     mockPost.mockResolvedValue({ data: { mode: 'test', message: 'ok', to_version: 'v1' } })
     const result = await configApi.rollbackToVersion('test', 'v1')
-    expect(mockPost).toHaveBeenCalledWith('/configs/test/rollback/v1', null, { params: { description: '版本回滚' } })
+    expect(mockPost).toHaveBeenCalledWith('/configs/test/rollback/v1', null, { params: { description: 'rollback' } })
     expect(result.to_version).toBe('v1')
   })
 
