@@ -147,5 +147,6 @@ jobs:
           export GITLAB_URL="${{ secrets.GITLAB_URL }}"
           export GITLAB_TOKEN="${{ secrets.GITLAB_TRIGGER_TOKEN }}"
           export GITLAB_PROJECT_ID="${{ secrets.GITLAB_PROJECT_ID }}"
+          export LABELS="manager-backend,manager-frontend"
           chmod +x scripts/trigger-gitlab.sh
           ./scripts/trigger-gitlab.sh main
