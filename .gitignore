@@ -80,3 +80,4 @@ coverage/
 *.backup
 
 .__joblens_web_manager.lock
+.omo
