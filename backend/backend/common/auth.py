@@ -5,6 +5,7 @@ import ipaddress
 import jwt
 from fastapi import Header, HTTPException, Request
 from backend.config import settings
+from backend.common.logger import logger
 
 _ALGORITHM = "HS256"
 _TOKEN_EXPIRE_SECONDS = 7 * 24 * 3600  # 7 天
@@ -49,16 +50,34 @@ async def verify_token(request: Request, authorization: str = Header(None)):
     if settings.auth_whitelist_ips and request.client:
         client_ip = request.client.host
         if _ip_in_whitelist(client_ip, settings.auth_whitelist_ips):
+            logger.info(f"IP白名单绕过认证成功 client_ip={client_ip}")
             return
     # JWT 令牌验证
+    client_ip = request.client.host if request.client else None
     if not authorization:
+        if client_ip:
+            logger.warning(f"认证失败：未提供认证凭据 client_ip={client_ip}")
+        else:
+            logger.warning("认证失败：未提供认证凭据")
         raise HTTPException(status_code=401, detail="未提供认证凭据")
     scheme, _, token = authorization.partition(" ")
     if scheme.lower() != "bearer" or not token:
+        if client_ip:
+            logger.warning(f"认证失败：认证格式错误 client_ip={client_ip}")
+        else:
+            logger.warning("认证失败：认证格式错误")
         raise HTTPException(status_code=401, detail="认证格式错误，需要 Bearer token")
     try:
         jwt.decode(token, settings.admin_password, algorithms=[_ALGORITHM])
     except jwt.ExpiredSignatureError:
+        if client_ip:
+            logger.warning(f"认证失败：令牌已过期 client_ip={client_ip}")
+        else:
+            logger.warning("认证失败：令牌已过期")
         raise HTTPException(status_code=401, detail="登录已过期，请重新登录")
     except jwt.InvalidTokenError:
+        if client_ip:
+            logger.warning(f"认证失败：令牌无效 client_ip={client_ip}")
+        else:
+            logger.warning("认证失败：令牌无效")
         raise HTTPException(status_code=401, detail="令牌无效，请重新登录")

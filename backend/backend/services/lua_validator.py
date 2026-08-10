@@ -9,6 +9,7 @@ class LuaValidator:
     
     def __init__(self):
         self.lua = lupa.LuaRuntime()
+        logger.debug("LuaValidator初始化完成")
         
     def validate_lua_syntax(self, lua_content: str) -> bool:
         """验证Lua语法是否正确"""
@@ -16,6 +17,7 @@ class LuaValidator:
             self.lua.execute(lua_content)
             return True
         except lupa.LuaError as e:
+            logger.warning(f"Lua语法验证失败 content_length={len(lua_content)} error={str(e)}")
             raise HTTPException(
                 status_code=400, 
                 detail=f"Lua语法错误: {str(e)}"
@@ -30,6 +32,7 @@ class LuaValidator:
             # 检查rule变量是否存在
             rule = self.lua.eval("rule")
             if rule is None:
+                logger.warning(f"规则结构验证失败 content_length={len(lua_content)} reason=缺少rule变量")
                 raise HTTPException(
                     status_code=400,
                     detail="规则必须包含'rule'变量"
@@ -39,6 +42,7 @@ class LuaValidator:
             required_fields = ['name', 'description', 'priority', 'condition']
             for field in required_fields:
                 if field not in rule:
+                    logger.warning(f"规则结构验证失败 content_length={len(lua_content)} field={field} reason=缺少必需字段")
                     raise HTTPException(
                         status_code=400,
                         detail=f"规则必须包含'{field}'字段"
@@ -46,24 +50,28 @@ class LuaValidator:
             
             # 验证字段类型
             if not isinstance(rule['name'], str):
+                logger.warning(f"规则字段类型错误 content_length={len(lua_content)} field=name expected_type=str")
                 raise HTTPException(
                     status_code=400,
                     detail="'name'字段必须是字符串"
                 )
             
             if not isinstance(rule['description'], str):
+                logger.warning(f"规则字段类型错误 content_length={len(lua_content)} field=description expected_type=str")
                 raise HTTPException(
                     status_code=400,
                     detail="'description'字段必须是字符串"
                 )
             
             if not isinstance(rule['priority'], (int, float)):
+                logger.warning(f"规则字段类型错误 content_length={len(lua_content)} field=priority expected_type=number")
                 raise HTTPException(
                     status_code=400,
                     detail="'priority'字段必须是数字"
                 )
             
             if not callable(rule['condition']):
+                logger.warning(f"规则字段类型错误 content_length={len(lua_content)} field=condition expected_type=function")
                 raise HTTPException(
                     status_code=400,
                     detail="'condition'字段必须是函数"
@@ -72,6 +80,7 @@ class LuaValidator:
             return dict(rule)
             
         except lupa.LuaError as e:
+            logger.warning(f"Lua执行错误 content_length={len(lua_content)} error={str(e)}")
             raise HTTPException(
                 status_code=400,
                 detail=f"Lua执行错误: {str(e)}"
@@ -85,6 +94,8 @@ class LuaValidator:
         # 2. 验证结构
         rule_structure = self.validate_rule_structure(lua_content)
         
+        logger.info(f"Lua规则验证成功 content_length={len(lua_content)}")
+
         return rule_structure
 
 

@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List
 from backend.services import RegistryService, CollectorService
 from backend.models import CollectorPerf, WriterPerf, WriterInfo, ServiceMetrics, PrometheusMetrics
+from backend.common.logger import logger
 
 router = APIRouter()
 registry_service = RegistryService()
@@ -20,6 +21,7 @@ async def get_collector_performance(service_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"获取采集器性能失败: service_id={service_id}, error={str(e)}")
         raise HTTPException(status_code=500, detail=f"获取采集器性能失败: {str(e)}")
 
 
@@ -34,6 +36,7 @@ async def get_writer_performance(service_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"获取Writer性能失败: service_id={service_id}, error={str(e)}")
         raise HTTPException(status_code=500, detail=f"获取Writer性能失败: {str(e)}")
 
 
@@ -52,6 +55,7 @@ async def get_writer_info(service_id: str, writer_name: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"获取Writer信息失败: service_id={service_id}, writer_name={writer_name}, error={str(e)}")
         raise HTTPException(status_code=500, detail=f"获取Writer信息失败: {str(e)}")
 
 
@@ -69,8 +73,10 @@ async def get_all_metrics(service_id: str):
         )
         
         if isinstance(collectors, Exception):
+            logger.warning(f"采集器指标获取失败: service_id={service_id}, host={service.host}, port={service.port}, error={str(collectors)}")
             collectors = []
         if isinstance(writers, Exception):
+            logger.warning(f"Writer指标获取失败: service_id={service_id}, host={service.host}, port={service.port}, error={str(writers)}")
             writers = []
         
         return ServiceMetrics(
@@ -82,6 +88,7 @@ async def get_all_metrics(service_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"获取服务指标失败: service_id={service_id}, error={str(e)}")
         raise HTTPException(status_code=500, detail=f"获取服务指标失败: {str(e)}")
 
 
@@ -97,6 +104,7 @@ async def get_prometheus_metrics(service_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"获取Prometheus指标失败: service_id={service_id}, error={str(e)}")
         raise HTTPException(status_code=500, detail=f"获取Prometheus指标失败: {str(e)}")
 
 
@@ -111,4 +119,5 @@ async def get_registry_metrics():
             "registry_stats": stats,
         }
     except Exception as e:
+        logger.error(f"获取注册中心指标失败: error={str(e)}")
         raise HTTPException(status_code=500, detail=f"获取注册中心指标失败: {str(e)}")

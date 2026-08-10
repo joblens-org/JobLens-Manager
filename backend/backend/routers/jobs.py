@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List
 from backend.services import RegistryService, CollectorService
 from backend.models import JobCreateRequest, JobInfo, JobListResponse, JobCount
+from backend.common.logger import logger
 
 router = APIRouter()
 registry_service = RegistryService()
@@ -15,6 +16,7 @@ async def list_all_jobs(
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量")
 ):
+    logger.info(f"获取作业列表: service_ids={service_ids}, page={page}, page_size={page_size}")
     try:
         # 解析服务ID列表
         selected_service_ids = None
@@ -30,6 +32,7 @@ async def list_all_jobs(
         
         # 如果没有指定服务ID且服务数量很多，返回空列表（避免性能问题）
         if not selected_service_ids and len(services) > 10:
+            logger.info(f"服务数量过多({len(services)}>10)且未指定service_ids，返回空列表")
             return []
         
         # 并发获取作业数据
@@ -48,20 +51,24 @@ async def list_all_jobs(
                         service_name=service.name,
                         jobs=jobs
                     ))
-            except Exception:
+            except Exception as e:
+                logger.warning(f"从服务获取作业失败: service_id={service.service_id}, host={service.host}, port={service.port}, error={str(e)}")
                 continue
         
         # 如果没有指定服务ID，返回前10个服务的作业（避免性能问题）
         if not selected_service_ids:
             results = results[:10]
         
+        logger.info(f"返回作业列表: 服务数={len(results)}")
         return results
     except Exception as e:
+        logger.error(f"获取作业列表失败: error={str(e)}")
         raise HTTPException(status_code=500, detail=f"获取作业列表失败: {str(e)}")
 
 
 @router.get("/{job_id}", response_model=JobInfo)
 async def get_job(job_id: str, service_id: str = Query(..., description="服务ID")):
+    logger.info(f"获取作业详情: job_id={job_id}, service_id={service_id}")
     try:
         service = await registry_service.get_service(service_id)
         if not service:
@@ -71,15 +78,18 @@ async def get_job(job_id: str, service_id: str = Query(..., description="服务I
         if not job:
             raise HTTPException(status_code=404, detail="作业不存在")
         
+        logger.info(f"获取作业详情成功: job_id={job_id}, service_id={service_id}")
         return job
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"获取作业详情失败: job_id={job_id}, service_id={service_id}, error={str(e)}")
         raise HTTPException(status_code=500, detail=f"获取作业详情失败: {str(e)}")
 
 
 @router.post("", response_model=JobInfo)
 async def create_job(job_request: JobCreateRequest):
+    logger.info(f"创建作业: service_id={job_request.service_id}, job_id={job_request.job_id}, job_type={job_request.job_type}")
     try:
         service = await registry_service.get_service(job_request.service_id)
         if not service:
@@ -102,15 +112,18 @@ async def create_job(job_request: JobCreateRequest):
         if not job:
             raise HTTPException(status_code=500, detail="作业创建成功但查询失败")
         
+        logger.info(f"创建作业成功: service_id={job_request.service_id}, job_id={job_request.job_id}")
         return job
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"创建作业失败: service_id={job_request.service_id}, job_id={job_request.job_id}, error={str(e)}")
         raise HTTPException(status_code=500, detail=f"创建作业失败: {str(e)}")
 
 
 @router.delete("/{job_id}")
 async def delete_job(job_id: str, service_id: str = Query(..., description="服务ID"), job_type: str = Query(..., description="作业类型")):
+    logger.info(f"删除作业: job_id={job_id}, service_id={service_id}, job_type={job_type}")
     try:
         service = await registry_service.get_service(service_id)
         if not service:
@@ -123,22 +136,28 @@ async def delete_job(job_id: str, service_id: str = Query(..., description="服�
             job_id=int(job_id),
         )
         
+        logger.info(f"删除作业成功: job_id={job_id}, service_id={service_id}")
         return {"message": "作业已删除", "job_id": job_id, "service_id": service_id}
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"删除作业失败: job_id={job_id}, service_id={service_id}, job_type={job_type}, error={str(e)}")
         raise HTTPException(status_code=500, detail=f"删除作业失败: {str(e)}")
 
 
 @router.get("/{service_id}/count", response_model=JobCount)
 async def get_job_count(service_id: str):
+    logger.info(f"获取作业数量: service_id={service_id}")
     try:
         service = await registry_service.get_service(service_id)
         if not service:
             raise HTTPException(status_code=404, detail="服务不存在")
         
-        return await collector_service.get_job_count(service.host, service.port)
+        result = await collector_service.get_job_count(service.host, service.port)
+        logger.info(f"获取作业数量成功: service_id={service_id}, count={result.job_count}")
+        return result
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"获取作业数量失败: service_id={service_id}, error={str(e)}")
         raise HTTPException(status_code=500, detail=f"获取作业数量失败: {str(e)}")
