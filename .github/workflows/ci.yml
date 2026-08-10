@@ -13,7 +13,7 @@ env:
 
 permissions:
   contents: read
-  packages: write
+  packages: admin
   attestations: write
   id-token: write
 
