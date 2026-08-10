@@ -14,17 +14,25 @@ import backend.main as _main_module
 # mock 掉 ETCD 初始化，避免 TestClient 启动时连接真实 ETCD
 _main_module.initialize_etcd = lambda: None
 
-from backend.common.auth import verify_token
+# TestClient 默认 client host 为 "testclient"（非 IP），无法命中 IP 白名单。
+# 统一改为本地回环地址，使 verify_token 的白名单绕过在所有测试中自动生效。
+_ORIGINAL_TESTCLIENT_INIT = TestClient.__init__
+
+
+def _testclient_init_localhost(self, *args, **kwargs):
+    kwargs.setdefault("client", ("127.0.0.1", 50000))
+    _ORIGINAL_TESTCLIENT_INIT(self, *args, **kwargs)
+
+
+TestClient.__init__ = _testclient_init_localhost
 
 
 @pytest.fixture(autouse=True)
-def override_auth():
-    """自动跳过认证验证，使现有测试能正常运行"""
-    async def _bypass_auth(**kwargs):
-        return None
-    app.dependency_overrides[verify_token] = _bypass_auth
+def override_auth(monkeypatch):
+    """通过 IP 白名单绕过认证：将本地回环地址加入白名单，使现有测试免认证。"""
+    from backend.config import settings
+    monkeypatch.setattr(settings, "auth_whitelist_ips", "127.0.0.1,::1")
     yield
-    app.dependency_overrides.clear()
 
 
 @pytest.fixture
