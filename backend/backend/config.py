@@ -17,6 +17,10 @@ class Settings(BaseSettings):
         default="127.0.0.1,::1",
         description="白名单 IP，逗号分隔，支持 CIDR（如 127.0.0.1,10.0.0.0/8），白名单 IP 调用接口免认证"
     )
+    trust_proxy_headers: bool = Field(
+        default=False,
+        description="是否信任代理头（X-Forwarded-For/X-Real-IP）解析客户端 IP，仅在受信任代理后启用"
+    )
 
     # ==================== 通用配置 ====================
     registry_url: str = Field(

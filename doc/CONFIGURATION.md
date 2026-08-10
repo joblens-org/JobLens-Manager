@@ -18,6 +18,7 @@
 | `LOG_PATH` | `./joblens_web_manager.log` | Log file path |
 | `ADMIN_PASSWORD` | `admin` | Admin login password |
 | `AUTH_WHITELIST_IPS` | *(empty)* | Whitelisted IPs, comma-separated, supports CIDR (e.g. `127.0.0.1,10.0.0.0/8`). Requests from these IPs bypass authentication |
+| `TRUST_PROXY_HEADERS` | `false` | Trust proxy headers (`X-Forwarded-For`, `X-Real-IP`) for client IP resolution. **Only enable when behind a trusted proxy that sets these headers correctly, otherwise clients can spoof their IP** |
 | `DEFAULT_MODE_NAME` | `default` | Default mode created on first startup |
 | `DEFAULT_ROLE_NAME` | `default` | Default role created on first startup |
 
