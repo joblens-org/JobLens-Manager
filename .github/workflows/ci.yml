@@ -114,25 +114,6 @@ jobs:
           subject-digest: ${{ steps.push-backend.outputs.digest }}
           push-to-registry: true
 
-      # 将后端镜像包设为 public（幂等：仅在非 public 时执行；public 后无法改回 private）
-      - name: 设置后端镜像包可见性为 public
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ORG="${GITHUB_REPOSITORY_OWNER,,}"
-          # GHCR 包名 = 仓库名/镜像名，斜杠需编码为 %2F
-          REPO="${GITHUB_REPOSITORY#*/}"
-          PKG="${REPO,,}%2Fbackend"
-          STATUS="$(gh api "/orgs/${ORG}/packages/container/${PKG}" --jq .visibility 2>/dev/null || echo unknown)"
-          echo "当前可见性: ${STATUS}"
-          if [ "${STATUS}" != "public" ]; then
-            gh api --method PATCH "/orgs/${ORG}/packages/container/${PKG}/visibility" -f visibility=public
-            echo "✓ 已设置为 public"
-          else
-            echo "✓ 已经是 public，跳过"
-          fi
-
       # ---- 前端镜像 ----
       - name: 提取前端镜像元数据
         id: meta-frontend
@@ -159,25 +140,6 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}
           subject-digest: ${{ steps.push-frontend.outputs.digest }}
           push-to-registry: true
-
-      # 将前端镜像包设为 public（幂等：仅在非 public 时执行；public 后无法改回 private）
-      - name: 设置前端镜像包可见性为 public
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ORG="${GITHUB_REPOSITORY_OWNER,,}"
-          # GHCR 包名 = 仓库名/镜像名，斜杠需编码为 %2F
-          REPO="${GITHUB_REPOSITORY#*/}"
-          PKG="${REPO,,}%2Ffrontend"
-          STATUS="$(gh api "/orgs/${ORG}/packages/container/${PKG}" --jq .visibility 2>/dev/null || echo unknown)"
-          echo "当前可见性: ${STATUS}"
-          if [ "${STATUS}" != "public" ]; then
-            gh api --method PATCH "/orgs/${ORG}/packages/container/${PKG}/visibility" -f visibility=public
-            echo "✓ 已设置为 public"
-          else
-            echo "✓ 已经是 public，跳过"
-          fi
 
       # ---- 触发 GitLab CI ----
       # - name: 触发 GitLab CI
