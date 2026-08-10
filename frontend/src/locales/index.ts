@@ -1,4 +1,6 @@
 import { createI18n } from 'vue-i18n'
+import elZhCn from 'element-plus/es/locale/lang/zh-cn'
+import elEn from 'element-plus/es/locale/lang/en'
 import zhCN from './zh-CN'
 import en from './en'
 
@@ -14,7 +16,11 @@ export const i18n = createI18n({
   legacy: false,
   locale: getDefaultLocale(),
   fallbackLocale: 'zh-CN',
-  messages: { 'zh-CN': zhCN, en },
+  messages: {
+    // legacy:false 下 EP 组件文案委托给 vue-i18n，必须注入 el.* 键，否则页面直接显示 el.table.emptyText 等原始 key
+    'zh-CN': { ...zhCN, el: elZhCn.el },
+    en: { ...en, el: elEn.el },
+  },
 })
 
 export function switchLang(lang: 'zh-CN' | 'en') {
