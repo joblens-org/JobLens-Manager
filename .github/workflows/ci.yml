@@ -141,12 +141,17 @@ jobs:
           subject-digest: ${{ steps.push-frontend.outputs.digest }}
           push-to-registry: true
 
-      # ---- 触发 GitLab CI ----
-      # - name: 触发 GitLab CI
-      #   run: |
-      #     export GITLAB_URL="${{ secrets.GITLAB_URL }}"
-      #     export GITLAB_TOKEN="${{ secrets.GITLAB_TRIGGER_TOKEN }}"
-      #     export GITLAB_PROJECT_ID="${{ secrets.GITLAB_PROJECT_ID }}"
-      #     export LABELS="manager-backend,manager-frontend"
-      #     chmod +x scripts/trigger-gitlab.sh
-      #     ./scripts/trigger-gitlab.sh main
+      # ---- 触发下游 GitLab 部署流水线 ----
+      - name: 触发 GitLab 部署流水线
+        env:
+          GITLAB_URL: ${{ secrets.GITLAB_URL }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+          GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}
+        run: |
+          export TRIGGER_VARS=$(cat <<EOF
+          DEPLOY_ENV=dev
+          STACK=management
+          EOF
+          )
+          chmod +x scripts/trigger-gitlab.sh
+          ./scripts/trigger-gitlab.sh main
