@@ -186,7 +186,7 @@ async def get_all_modes_from_etcd(client) -> List[ModeInfo]:
         return []
 
 
-@router.get("/", response_model=ModeListResponse, summary="获取所有模式列表")
+@router.get("", response_model=ModeListResponse, summary="获取所有模式列表")
 async def get_modes():
     """获取所有模式列表"""
     logger.info("获取模式列表")
@@ -200,7 +200,7 @@ async def get_modes():
         raise HTTPException(status_code=500, detail=f"获取模式列表失败: {str(e)}")
 
 
-@router.post("/", response_model=ModeInfo, summary="创建新模式")
+@router.post("", response_model=ModeInfo, summary="创建新模式")
 async def create_mode(mode_create: ModeCreate):
     """创建新模式"""
     logger.info(f"创建模式: name={mode_create.name}, default={mode_create.default}")

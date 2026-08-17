@@ -96,7 +96,7 @@ def _merge_cluster_scheme(instance_data: dict, config: ClusterConfig) -> Cluster
     )
 
 
-@router.get("/", response_model=ClusterListResponse, summary="获取所有集群列表")
+@router.get("", response_model=ClusterListResponse, summary="获取所有集群列表")
 async def get_clusters():
     """获取所有集群列表（合并自动发现数据 + 手动配置）"""
     logger.info("获取集群列表")

@@ -184,7 +184,7 @@ def get_all_roles_from_etcd_sync(client) -> List[RoleInfo]:
 
 
 
-@router.get("/", response_model=RoleListResponse, summary="获取所有角色列表")
+@router.get("", response_model=RoleListResponse, summary="获取所有角色列表")
 async def get_roles():
     """获取所有角色列表"""
     logger.info("获取角色列表")
@@ -198,7 +198,7 @@ async def get_roles():
         raise HTTPException(status_code=500, detail=f"获取角色列表失败: {str(e)}")
 
 
-@router.post("/", response_model=RoleInfo, summary="创建新角色")
+@router.post("", response_model=RoleInfo, summary="创建新角色")
 async def create_role(role_create: RoleCreate):
     """创建新角色"""
     logger.info(f"创建角色: name={role_create.name}, parent_role_id={role_create.parent_role_id}")

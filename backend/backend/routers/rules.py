@@ -33,7 +33,7 @@ async def is_role_exist(client, role_id: str) -> bool:
     return role_info_json is not None
 
 
-@router.get("/", response_model=RuleListResponse, summary="获取所有规则列表")
+@router.get("", response_model=RuleListResponse, summary="获取所有规则列表")
 async def get_rules(
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量")
@@ -61,7 +61,7 @@ async def get_rules(
         raise HTTPException(status_code=500, detail=f"获取规则列表失败: {str(e)}")
 
 
-@router.post("/", response_model=RuleInfo, summary="创建规则")
+@router.post("", response_model=RuleInfo, summary="创建规则")
 async def create_rule(rule_create: RuleCreate):
     """创建新规则"""
     try:
