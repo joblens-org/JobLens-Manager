@@ -1,6 +1,6 @@
 import './assets/main.css'
 
-import { createApp, computed } from 'vue'
+import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -22,9 +22,7 @@ app.use(createPinia())
 app.use(router)
 app.use(i18n)
 app.use(ElementPlus, {
-  locale: computed(() =>
-    i18n.global.locale.value === 'zh-CN' ? zhCn : en,
-  ) as never,
+  locale: i18n.global.locale.value === 'zh-CN' ? zhCn : en,
 })
 
 app.mount('#app')
