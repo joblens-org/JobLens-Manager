@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from backend.routers import services, jobs, metrics, configs, modes, roles, rules, clusters, auth
+from backend.routers import services, jobs, metrics, configs, modes, roles, rules, clusters, auth, health
 from contextlib import asynccontextmanager
 from backend.common.logger import logger
 from backend.common import initialize_etcd
@@ -66,6 +66,7 @@ api_router.include_router(modes.router, prefix="/modes", tags=["modes"])
 api_router.include_router(roles.router, prefix="/roles", tags=["roles"])
 api_router.include_router(rules.router, prefix="/rules", tags=["rules"])
 api_router.include_router(clusters.router, prefix="/clusters", tags=["clusters"])
+api_router.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(api_router)
 
 
