@@ -34,7 +34,13 @@ class _Client:
 
 def _etcd_ok():
     return SimpleNamespace(
-        status=lambda: SimpleNamespace(leader=7, raftIndex=42, dbSize=1024)
+        status=lambda: SimpleNamespace(
+            version="3.5.26",
+            db_size=1024,
+            leader=SimpleNamespace(id=7),
+            raft_index=42,
+            raft_term=3,
+        )
     )
 
 

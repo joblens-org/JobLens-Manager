@@ -18,6 +18,17 @@ from backend.config import settings
 router = APIRouter()
 
 
+def _jsonable(value):
+    """把 protobuf/etcd 对象等非 JSON 原生类型降级为字符串，避免健康检查自己 500。"""
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, dict):
+        return {k: _jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(v) for v in value]
+    return str(value)
+
+
 @router.get("/deep", summary="深度健康检查（etcd + 注册中心）")
 async def deep_health():
     """检查后端自身依赖是否可用。
@@ -33,11 +44,15 @@ async def deep_health():
     try:
         client = get_etcd_client()
         status = client.status()
+        leader = getattr(status, "leader", None)
         checks["etcd"] = {
             "status": "ok",
-            "leader": getattr(status, "leader", None),
-            "raft_index": getattr(status, "raftIndex", None),
-            "db_size": getattr(status, "dbSize", None),
+            "version": getattr(status, "version", None),
+            # leader 是 etcd3.Member 对象，只能取 id；db_size/raft_index 是 snake_case 属性
+            "leader": getattr(leader, "id", None),
+            "raft_index": getattr(status, "raft_index", None),
+            "raft_term": getattr(status, "raft_term", None),
+            "db_size": getattr(status, "db_size", None),
         }
     except Exception as exc:  # 连接失败 / 超时 / 证书等
         healthy = False
@@ -70,4 +85,4 @@ async def deep_health():
         "status": "healthy" if healthy else "degraded",
         "checks": checks,
     }
-    return JSONResponse(status_code=200 if healthy else 503, content=body)
+    return JSONResponse(status_code=200 if healthy else 503, content=_jsonable(body))
